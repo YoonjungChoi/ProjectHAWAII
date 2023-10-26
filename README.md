@@ -5,6 +5,8 @@
 import torch
 import LLMTranslation
 
+#default = torch.device("cpu")
+
 myTranslator = LLMTranslation.SeamlessMT4(device=torch.device("cuda:0"))
 result = myTranslator.translateText("How are you, Today? It's a sunny day!", "eng", "tgl")
 
