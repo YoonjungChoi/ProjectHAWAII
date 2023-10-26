@@ -1,4 +1,5 @@
 import torch
+import json
 from seamless_communication.models.inference import Translator
 
 class SeamlessMT4:
@@ -30,8 +31,36 @@ class SeamlessMT4:
         print("[ERROR] check languages..")
         return ""
 
-  def translateJson(self, json_text, src, tgt):
-    translated_json_text = ""
-    return translated_json_text
+  def translateJson(self, json_file, src, tgt):
+    with open(json_file, "r") as read_file:
+        data = json.load(read_file)
+    trans_lists = ['title', 'topic', 'summary', 'questions']    
+    for item in data:
+        for key in item.keys():
+            if key in trans_lists:
+                if isinstance(item[key],str) == True:
+                    if (len(item[key]) <= 1024):
+                        translated_text = self._translate(item[key], src, tgt)
+                        item[key] = translated_text
+                
+                elif key == 'questions':
+                    ques_keys = list(item[key].keys())
+                    output = {}
+                    for idx_i, ques_key in enumerate(ques_keys):
+                        if (len(ques_keys[idx_i]) <= 1024):
+                            translated_ques = self._translate(ques_keys[idx_i], src, tgt)
+                            answers = item['questions'][ques_keys[idx_i]]
+                            for idx_j, ans in enumerate(answers):
+                                translated_ans = self._translate(ans['answer'], src, tgt)
+                                item['questions'][ques_keys[idx_i]][idx_j]['answer'] = str(translated_ans)
+                        output[str(translated_ques)] = list(item['questions'][ques_keys[idx_i]])
+                    #replace questions to translated question, because question_text is the key of dictionary
+                    item['questions'] = output
+
+    file_name = "tr_result_" + src +"_"+tgt+".json"
+    with open(file_name, "w") as f:
+        json.dump(data, f)
+      
+    return data
 
 
