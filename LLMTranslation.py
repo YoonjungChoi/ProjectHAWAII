@@ -16,7 +16,7 @@ class SeamlessMT4:
 
   def _translate(self, text, src, tgt):
     result, _, _ = self._translator.predict(text, "t2tt", tgt, src_lang=src)
-    return result
+    return str(result)
 
   def _isAvailable(self, lang):
       if lang in self._langs:
