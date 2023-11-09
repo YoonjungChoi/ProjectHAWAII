@@ -23,6 +23,22 @@ class SeamlessMT4:
       if lang in self._langs:
           return True
       return False
+
+  def _split_text(self, text, spe):
+    splited = text.split(spe)
+    res = []
+    cnt = 0
+    fixedChunk = ""
+    
+    for item in splited:
+        if (cnt + len(item) < 1024) :
+            cnt += len(item)
+            fixedChunk += item + spe
+        else:
+            res.append(fixedChunk)
+            cnt=len(item)
+            fixedChunk = item + spe
+    return res
           
   def translateText(self, text, src, tgt):
     if self._isAvailable(src) and self._isAvailable(tgt):
@@ -34,14 +50,23 @@ class SeamlessMT4:
   def translateJson(self, json_file, src, tgt):
     with open(json_file, "r") as read_file:
         data = json.load(read_file)
-    trans_lists = ['title', 'topic', 'summary', 'questions']    
+    trans_lists = ['title', 'topic', 'questions', 'context', 'summary']  
     for item in data:
         for key in item.keys():
+            print("LOG item.keys()", key)
             if key in trans_lists:
                 if isinstance(item[key],str) == True:
                     if (len(item[key]) <= 1024):
                         translated_text = self._translate(item[key], src, tgt)
                         item[key] = translated_text
+                    else:
+                        sep = "\n" if key == 'context' else "."
+                        chunks = self._split_text(item[key], sep)
+                        translated_chunks = ""
+                        for chunk in chunks:
+                            translated_text = self._translate(chunk, src, tgt)
+                            translated_chunks += translated_text
+                        item[key] = translated_chunks
                 
                 elif key == 'questions':
                     ques_keys = list(item[key].keys())
